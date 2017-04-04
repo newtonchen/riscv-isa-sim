@@ -8,6 +8,7 @@
 #include "mmu.h"
 #include "disasm.h"
 #include "gdbserver.h"
+#include "cosim.h"
 #include <cinttypes>
 #include <cmath>
 #include <cstdlib>
@@ -30,6 +31,7 @@ processor_t::processor_t(const char* isa, sim_t* sim, uint32_t id,
   mmu = new mmu_t(sim, this);
   disassembler = new disassembler_t(max_xlen);
 
+  csi.clear();
   reset();
 }
 
@@ -459,9 +461,10 @@ void processor_t::set_csr(int which, reg_t val)
       state.dscratch = val;
       break;
   }
+  csi.access(csChgAccWrCSR, which, val);
 }
 
-reg_t processor_t::get_csr(int which)
+reg_t processor_t::get_csr__(int which)
 {
   reg_t ctr_en = state.prv == PRV_U ? state.mucounteren :
                  state.prv == PRV_S ? state.mscounteren : -1U;
@@ -605,6 +608,13 @@ reg_t processor_t::get_csr(int which)
       return state.dscratch;
   }
   throw trap_illegal_instruction();
+}
+
+reg_t processor_t::get_csr(int which)
+{
+  reg_t res = get_csr__(which);
+  csi.access(csChgAccRdCSR, which, res);
+  return res;
 }
 
 reg_t illegal_instruction(processor_t* p, insn_t insn, reg_t pc)

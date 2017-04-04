@@ -12,6 +12,7 @@
 #include <string>
 #include <memory>
 
+class cosim;
 class mmu_t;
 class gdbserver_t;
 
@@ -92,6 +93,7 @@ private:
 
   // htif
   friend void sim_thread_main(void*);
+  friend class cosim;
   void main();
 
   context_t* host;

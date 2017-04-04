@@ -122,25 +122,36 @@ private:
 // helpful macros, etc
 #define MMU (*p->get_mmu())
 #define STATE (*p->get_state())
-#define READ_REG(reg) STATE.XPR[reg]
-#define READ_FREG(reg) STATE.FPR[reg]
+#define CSI (*p->get_csi())
+#define READ_REG(reg) (p->rd_xpr(reg))
+#define READ_FREG(reg) (p->rd_fpr(reg))
 #define RS1 READ_REG(insn.rs1())
 #define RS2 READ_REG(insn.rs2())
 #define WRITE_RD(value) WRITE_REG(insn.rd(), value)
 
 #ifndef RISCV_ENABLE_COMMITLOG
-# define WRITE_REG(reg, value) STATE.XPR.write(reg, value)
-# define WRITE_FREG(reg, value) DO_WRITE_FREG(reg, value)
+# define WRITE_REG(reg, value) ({ \
+    reg_t wdata = (value); /* value may have side effects */ \
+    STATE.XPR.write(reg, wdata); \
+    CSI.access(csChgAccWrXPR, reg, wdata); \
+  })
+# define WRITE_FREG(reg, value) ({\
+    reg_t wdata = (value); /* value may have side effects */ \
+    DO_WRITE_FREG(reg, wdata); \
+    CSI.access(csChgAccWrFPR, reg, wdata); \
+  })
 #else
 # define WRITE_REG(reg, value) ({ \
     reg_t wdata = (value); /* value may have side effects */ \
     STATE.log_reg_write = (commit_log_reg_t){(reg) << 1, wdata}; \
     STATE.XPR.write(reg, wdata); \
+    CSI.access(csChgAccWrXPR, reg, wdata); \
   })
 # define WRITE_FREG(reg, value) ({ \
     freg_t wdata = (value); /* value may have side effects */ \
     STATE.log_reg_write = (commit_log_reg_t){((reg) << 1) | 1, wdata}; \
     DO_WRITE_FREG(reg, wdata); \
+    CSI.access(csChgAccWrFPR, reg, wdata); \
   })
 #endif
 

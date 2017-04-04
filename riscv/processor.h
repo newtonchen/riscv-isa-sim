@@ -5,10 +5,12 @@
 #include "decode.h"
 #include "config.h"
 #include "devices.h"
+#include "cosim_ci.h"
 #include <string>
 #include <vector>
 #include <map>
 
+class cosim;
 class processor_t;
 class mmu_t;
 typedef reg_t (*insn_func_t)(processor_t*, insn_t, reg_t);
@@ -168,6 +170,7 @@ public:
   void step(size_t n); // run for n cycles
   void set_csr(int which, reg_t val);
   reg_t get_csr(int which);
+  reg_t get_csr__(int which);
   mmu_t* get_mmu() { return mmu; }
   state_t* get_state() { return &state; }
   extension_t* get_extension() { return ext; }
@@ -275,7 +278,20 @@ public:
 
   void trigger_updated();
 
+  csChgInfo_t* get_csi() { return &csi; }
+  reg_t rd_xpr(uint16_t reg) {
+      reg_t v = state.XPR[reg];
+      csi.access(csChgAccRdXPR, reg, v);
+      return v;
+  };
+  reg_t rd_fpr(uint16_t reg) {
+      reg_t v = state.FPR[reg];
+      csi.access(csChgAccRdFPR, reg, v);
+      return v;
+  };
+
 private:
+  csChgInfo_t csi;   // cosim info
   sim_t* sim;
   mmu_t* mmu; // main memory is always accessed via the mmu
   extension_t* ext;
@@ -304,6 +320,7 @@ private:
 
   void enter_debug_mode(uint8_t cause);
 
+  friend class cosim;
   friend class sim_t;
   friend class mmu_t;
   friend class rtc_t;

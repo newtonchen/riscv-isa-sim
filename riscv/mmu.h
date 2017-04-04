@@ -57,8 +57,12 @@ public:
       if (addr & (sizeof(type##_t)-1)) \
         throw trap_load_address_misaligned(addr); \
       reg_t vpn = addr >> PGSHIFT; \
-      if (likely(tlb_load_tag[vpn % TLB_ENTRIES] == vpn)) \
-        return *(type##_t*)(tlb_data[vpn % TLB_ENTRIES] + addr); \
+      if (likely(tlb_load_tag[vpn % TLB_ENTRIES] == vpn)){ \
+        type##_t data = *(type##_t*)(tlb_data[vpn % TLB_ENTRIES] + addr); \
+        if (proc != NULL) \
+            proc->csi.access(csChgAccLD##type, addr, data); \
+        return data; \
+      } \
       if (unlikely(tlb_load_tag[vpn % TLB_ENTRIES] == (vpn | TLB_CHECK_TRIGGERS))) { \
         type##_t data = *(type##_t*)(tlb_data[vpn % TLB_ENTRIES] + addr); \
         if (!matched_trigger) { \
@@ -66,10 +70,14 @@ public:
           if (matched_trigger) \
             throw *matched_trigger; \
         } \
+        if (proc != NULL) \
+            proc->csi.access(csChgAccLD##type, addr, data); \
         return data; \
       } \
       type##_t res; \
       load_slow_path(addr, sizeof(type##_t), (uint8_t*)&res); \
+      if (proc != NULL) \
+        proc->csi.access(csChgAccLD##type, addr, res); \
       return res; \
     }
 
@@ -91,8 +99,11 @@ public:
       if (addr & (sizeof(type##_t)-1)) \
         throw trap_store_address_misaligned(addr); \
       reg_t vpn = addr >> PGSHIFT; \
-      if (likely(tlb_store_tag[vpn % TLB_ENTRIES] == vpn)) \
+      if (likely(tlb_store_tag[vpn % TLB_ENTRIES] == vpn)) { \
         *(type##_t*)(tlb_data[vpn % TLB_ENTRIES] + addr) = val; \
+        if (proc != NULL) \
+            proc->csi.access(csChgAccST##type, addr, val); \
+      } \
       else if (unlikely(tlb_store_tag[vpn % TLB_ENTRIES] == (vpn | TLB_CHECK_TRIGGERS))) { \
         if (!matched_trigger) { \
           matched_trigger = trigger_exception(OPERATION_STORE, addr, val); \
@@ -100,9 +111,14 @@ public:
             throw *matched_trigger; \
         } \
         *(type##_t*)(tlb_data[vpn % TLB_ENTRIES] + addr) = val; \
+        if (proc != NULL) \
+            proc->csi.access(csChgAccST##type, addr, val); \
       } \
-      else \
+      else {\
         store_slow_path(addr, sizeof(type##_t), (const uint8_t*)&val); \
+        if (proc != NULL) \
+            proc->csi.access(csChgAccST##type, addr, val); \
+      } \
     }
 
   // template for functions that perform an atomic memory operation
