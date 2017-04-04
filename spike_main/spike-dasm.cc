@@ -14,6 +14,12 @@
 #include <fesvr/option_parser.h>
 using namespace std;
 
+#include <stdint.h>
+extern "C"
+{
+void cs_mem_write(uint64_t, uint64_t) {};
+}
+
 int main(int argc, char** argv)
 {
   string s;

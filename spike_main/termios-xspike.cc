@@ -10,6 +10,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <stdint.h>
+extern "C"
+{
+void cs_mem_write(uint64_t, uint64_t) {};
+}
+
 int main()
 {
   struct termios old_tios;

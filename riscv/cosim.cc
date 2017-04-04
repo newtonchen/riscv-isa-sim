@@ -6,6 +6,7 @@
 #include "extension.h"
 #include <dlfcn.h>
 #include <fesvr/option_parser.h>
+#include <fesvr/device.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
@@ -56,6 +57,15 @@ int      csGetCPUChg(csHandle a, uint8_t b, csChgInfo_t* c) {
 }
 int      csSetCPUChg(csHandle a, uint8_t b, csChgInfo_t* c) {
     return cosim::csSetCPUChg(a, b, *c);
+}
+void     csFesvrStep(csHandle a) { 
+    cosim::csFesvrStep(a); 
+}
+void     csFesvrStart(csHandle a) { 
+    cosim::csFesvrStart(a); 
+}
+void     csFesvrStop(csHandle a) { 
+    cosim::csFesvrStop(a); 
 }
 }
 
@@ -165,3 +175,19 @@ int cosim::csSetCPUChg(csHandle handle, uint8_t pid, csChgInfo_t& cg) {
   if (pid >= s->procs.size()) return 0;
   return 0;
 }
+
+void cosim::csFesvrStart(csHandle& handle){
+  sim_t* s = reinterpret_cast<sim_t*>(handle);
+  s->start();
+}
+
+void cosim::csFesvrStep(csHandle& handle){
+  sim_t* s = reinterpret_cast<sim_t*>(handle);
+  s->step_htif();
+}
+
+void cosim::csFesvrStop(csHandle& handle){
+  sim_t* s = reinterpret_cast<sim_t*>(handle);
+  s->stop();
+}
+

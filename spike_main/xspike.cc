@@ -15,6 +15,12 @@
 static pid_t fork_spike(int tty_fd, int argc, char** argv);
 static pid_t fork_xterm(int* tty_fd);
 
+#include <stdint.h>
+extern "C"
+{
+void cs_mem_write(uint64_t, uint64_t) {};
+}
+
 int main(int argc, char** argv)
 {
   int tty_fd, wait_status, ret = -1;

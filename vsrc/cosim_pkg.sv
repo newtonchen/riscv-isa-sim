@@ -72,7 +72,13 @@ package cosim_pkg;
                     input csHandle      handle, 
                     input uint8_t       pid, 
                     output csChgInfo_t  csi);
-  
+  import "DPI" context function void     csFesvrStop(
+                    input csHandle      handle);
+  import "DPI" context function void     csFesvrStart(
+                    input csHandle      handle);
+  import "DPI" context function void     csFesvrStep(
+                    input csHandle      handle);
+
   function automatic string csi2string(const ref csChgInfo_t csi, input bit verb = 0);
       csi2string = "";
       for(int i = 0; i < csi.insnNum; i++)

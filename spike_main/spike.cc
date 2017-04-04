@@ -13,6 +13,11 @@
 #include <string>
 #include <memory>
 
+extern "C"
+{
+void cs_mem_write(reg_t, reg_t) {};
+}
+
 static void help()
 {
   fprintf(stderr, "usage: spike [host options] <target program> [target options]\n");
