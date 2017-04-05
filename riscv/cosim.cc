@@ -46,8 +46,8 @@ csHandle csCreateCtx(char * s) {
     argv[argc] = 0;
     return cosim::csCreateCtx(argc, argv);
 }
-void     csDestroyCtx(csHandle a) { 
-    cosim::csDestroyCtx(a); 
+void     csDestroyCtx(csHandle* a) { 
+    cosim::csDestroyCtx(*a); 
 }
 int      csStep(csHandle a, uint8_t b, uint32_t c, uint8_t d) { 
     return cosim::csStep(a, b, c, d);
@@ -55,8 +55,8 @@ int      csStep(csHandle a, uint8_t b, uint32_t c, uint8_t d) {
 int      csGetCPUChg(csHandle a, uint8_t b, csChgInfo_t* c) {
     return cosim::csGetCPUChg(a, b, *c);
 }
-int      csSetCPUChg(csHandle a, uint8_t b, csChgInfo_t* c) {
-    return cosim::csSetCPUChg(a, b, *c);
+int      csExecCPUop(csHandle a, uint8_t b, csChgOP_t* c) {
+    return cosim::csExecCPUop(a, b, *c);
 }
 void     csFesvrStep(csHandle a) { 
     cosim::csFesvrStep(a); 
@@ -147,6 +147,7 @@ void cosim::csDestroyCtx(csHandle& handle){
   sim_t* s = reinterpret_cast<sim_t*>(handle);
   if (s != NULL)
       free(s);
+  handle = NULL;
 }
 
 int cosim::csStep(csHandle handle, uint8_t pid, uint32_t n, uint8_t yield_lr){
@@ -169,10 +170,77 @@ int cosim::csGetCPUChg(csHandle handle, uint8_t pid, csChgInfo_t& csi) {
   return 1;
 }
 
-int cosim::csSetCPUChg(csHandle handle, uint8_t pid, csChgInfo_t& cg) {
+int cosim::csExecCPUop(csHandle handle, uint8_t pid, csChgOP_t& op) {
   sim_t* s = reinterpret_cast<sim_t*>(handle);
   if (s == NULL) return 0;
   if (pid >= s->procs.size()) return 0;
+  processor_t& p = *s->procs[pid];
+  switch(op.access){
+    case csChgAccRdXPR:
+        if (op.addr >= NXPR)
+            break;
+        op.data = p.state.XPR[op.addr];
+        return 1;
+    case csChgAccWrXPR:
+        if (op.addr >= NXPR)
+            break;
+        p.state.XPR.write(op.addr, op.data);
+        return 1;
+    case csChgAccRdFPR:
+        if (op.addr >= NFPR)
+            break;
+        op.data = p.state.FPR[op.addr];
+        return 1;
+    case csChgAccWrFPR:
+        if (op.addr >= NFPR)
+            break;
+        p.state.FPR.write(op.addr, op.data);
+        return 1;
+    case csChgAccRdCSR:
+        op.data = p.get_csr__(op.addr);
+        return 1;
+    case csChgAccWrCSR:
+        p.set_csr__(op.addr, op.data);
+        return 1;
+    case csChgAccLDint8:
+        op.data = p.get_mmu()->load_int8(op.addr);
+        return 1;
+    case csChgAccLDint16:
+        op.data = p.get_mmu()->load_int16(op.addr);
+        return 1;
+    case csChgAccLDint32:
+        op.data = p.get_mmu()->load_int32(op.addr);
+        return 1;
+    case csChgAccLDint64:
+        op.data = p.get_mmu()->load_int64(op.addr);
+        return 1;
+    case csChgAccLDuint8:
+        op.data = p.get_mmu()->load_uint8(op.addr);
+        return 1;
+    case csChgAccLDuint16:
+        op.data = p.get_mmu()->load_uint16(op.addr);
+        return 1;
+    case csChgAccLDuint32:
+        op.data = p.get_mmu()->load_uint32(op.addr);
+        return 1;
+    case csChgAccLDuint64:
+        op.data = p.get_mmu()->load_uint64(op.addr);
+        return 1;
+    case csChgAccSTuint8:
+        p.get_mmu()->store_uint8(op.addr, op.data);
+        return 1;
+    case csChgAccSTuint16:
+        p.get_mmu()->store_uint16(op.addr, op.data);
+        return 1;
+    case csChgAccSTuint32:
+        p.get_mmu()->store_uint32(op.addr, op.data);
+        return 1;
+    case csChgAccSTuint64:
+        p.get_mmu()->store_uint64(op.addr, op.data);
+        return 1;
+        break;
+  };
+  fprintf(stderr, "cosim: Error executing cosim::csExecCPUop: op %d\n", op.access);
   return 0;
 }
 

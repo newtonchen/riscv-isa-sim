@@ -18,28 +18,24 @@ package cosim_pkg;
 
   typedef enum uint8_t
   {
-    csChgAccRdXPR,
-    csChgAccWrXPR,
-    csChgAccRdFPR,
-    csChgAccWrFPR,
-    csChgAccRdCSR,
-    csChgAccWrCSR,
-    csChgAccLDint8,
-    csChgAccLDint16,
-    csChgAccLDint32,
-    csChgAccLDint64,
-    csChgAccLDuint8,
-    csChgAccLDuint16,
-    csChgAccLDuint32,
-    csChgAccLDuint64,
-    csChgAccSTint8,
-    csChgAccSTint16,
-    csChgAccSTint32,
-    csChgAccSTint64,
-    csChgAccSTuint8,
-    csChgAccSTuint16,
-    csChgAccSTuint32,
-    csChgAccSTuint64
+    cs_RdXPR,
+    cs_WrXPR,
+    cs_RdFPR,
+    cs_WrFPR,
+    cs_RdCSR,
+    cs_WrCSR,
+    cs_LDint8,
+    cs_LDint16,
+    cs_LDint32,
+    cs_LDint64,
+    cs_LDuint8,
+    cs_LDuint16,
+    cs_LDuint32,
+    cs_LDuint64,
+    cs_STuint8,
+    cs_STuint16,
+    cs_STuint32,
+    cs_STuint64
   } csChgAccess_t;
 
   typedef struct {
@@ -58,7 +54,7 @@ package cosim_pkg;
   import "DPI" context function chandle csCreateCtx(
                     input  string       args);
   import "DPI" context function void     csDestroyCtx(
-                    input csHandle      handle);
+                    inout csHandle      handle);
   import "DPI" context function int      csStep(
                     input csHandle      handle, 
                     input uint8_t       pid = 0, 
@@ -68,10 +64,10 @@ package cosim_pkg;
                     input csHandle      handle, 
                     input uint8_t       pid, 
                     output csChgInfo_t  csi);
-  import "DPI" context function int      csSetCPUChg(
+  import "DPI" context function int      csExecCPUop(
                     input csHandle      handle, 
                     input uint8_t       pid, 
-                    output csChgInfo_t  csi);
+                    inout csChgOP_t     csi);
   import "DPI" context function void     csFesvrStop(
                     input csHandle      handle);
   import "DPI" context function void     csFesvrStart(

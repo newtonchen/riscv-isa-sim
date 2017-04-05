@@ -85,7 +85,7 @@ VPATH := $(addprefix $(src_dir)/, $(sprojs_enabled))
 CC            := @CC@
 CXX           := @CXX@
 CFLAGS        += @CFLAGS@ -DPREFIX=\"$(prefix)\" -Werror
-CPPFLAGS      += @CPPFLAGS@
+CPPFLAGS      += @CPPFLAGS@  -I${VCS_HOME}/include
 CXXFLAGS      += @CXXFLAGS@ -DPREFIX=\"$(prefix)\" -Werror
 COMPILE       := $(CXX) -fPIC -MMD -MP $(CPPFLAGS) $(CXXFLAGS) \
                  $(sprojs_include)

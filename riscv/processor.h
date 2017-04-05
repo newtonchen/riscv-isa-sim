@@ -170,7 +170,6 @@ public:
   void step(size_t n); // run for n cycles
   void set_csr(int which, reg_t val);
   reg_t get_csr(int which);
-  reg_t get_csr__(int which);
   mmu_t* get_mmu() { return mmu; }
   state_t* get_state() { return &state; }
   extension_t* get_extension() { return ext; }
@@ -319,6 +318,9 @@ private:
   int paddr_bits();
 
   void enter_debug_mode(uint8_t cause);
+
+  void set_csr__(int which, reg_t val);
+  reg_t get_csr__(int which);
 
   friend class cosim;
   friend class sim_t;

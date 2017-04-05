@@ -281,7 +281,7 @@ int processor_t::paddr_bits()
   return max_xlen == 64 ? 50 : 34;
 }
 
-void processor_t::set_csr(int which, reg_t val)
+void processor_t::set_csr__(int which, reg_t val)
 {
   val = zext_xlen(val);
   reg_t delegable_ints = MIP_SSIP | MIP_STIP | MIP_SEIP | (1 << IRQ_COP);
@@ -461,6 +461,11 @@ void processor_t::set_csr(int which, reg_t val)
       state.dscratch = val;
       break;
   }
+}
+
+void processor_t::set_csr(int which, reg_t val)
+{
+  set_csr__(which, val);
   csi.access(csChgAccWrCSR, which, val);
 }
 
