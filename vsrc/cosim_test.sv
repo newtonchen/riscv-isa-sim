@@ -15,7 +15,11 @@ program cosim_test;
     csHandle h;
     csChgInfo_t csi;
     csChgOP_t   op;
-    h = csCreateCtx("spike /opt/riscv/riscv64-unknown-elf/share/riscv-tests/isa/rv64um-v-mulh");
+    string arg = "spike", exec;
+    if ($value$plusargs("exec=%s", exec))
+      arg = {arg, " ", exec};                       
+    h = csCreateCtx(arg);
+    //"spike /opt/riscv/riscv64-unknown-elf/share/riscv-tests/isa/rv64um-v-mulh");
     csFesvrStart(h);
     op.access = cs_WrXPR;
     op.addr   = 'h1;
