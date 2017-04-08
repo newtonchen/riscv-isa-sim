@@ -2,7 +2,6 @@
 #include "sim.h"
 #include "mmu.h"
 #include "gdbserver.h"
-#include "cachesim.h"
 #include "extension.h"
 #include <dlfcn.h>
 #include <fesvr/option_parser.h>
@@ -22,14 +21,20 @@ static void help(){
   fprintf(stderr, "  -h                    Print this help message\n");
   fprintf(stderr, "  -H                 Start halted, allowing a debugger to connect\n");
   fprintf(stderr, "  --isa=<name>          RISC-V ISA string [default %s]\n", DEFAULT_ISA);
-//  fprintf(stderr, "  --ic=<S>:<W>:<B>      Instantiate a cache model with S sets,\n");
-//  fprintf(stderr, "  --dc=<S>:<W>:<B>        W ways, and B-byte blocks (with S and\n");
-//  fprintf(stderr, "  --l2=<S>:<W>:<B>        B both powers of 2).\n");
+  fprintf(stderr, "  --ic=<S>:<W>:<B>      Instantiate a cache model with S sets,\n");
+  fprintf(stderr, "  --dc=<S>:<W>:<B>        W ways, and B-byte blocks (with S and\n");
+  fprintf(stderr, "  --l2=<S>:<W>:<B>        B both powers of 2).\n");
   fprintf(stderr, "  --extension=<name>    Specify RoCC Extension\n");
   fprintf(stderr, "  --extlib=<name>       Shared library to load\n");
-//  fprintf(stderr, "  --gdb-port=<port>  Listen on <port> for gdb to connect\n");
+  fprintf(stderr, "  --gdb-port=<port>  Listen on <port> for gdb to connect\n");
   fprintf(stderr, "  --dump-config-string  Print platform configuration string and exit\n");
 }
+
+std::unique_ptr<gdbserver_t>  cosim::gdbserver;
+std::unique_ptr<icache_sim_t> cosim::ic;
+std::unique_ptr<dcache_sim_t> cosim::dc;
+std::unique_ptr<cache_sim_t>  cosim::l2;
+uint16_t cosim::gdb_port;
 
 extern "C" {
 csHandle csCreateCtx(char * s) {
@@ -67,6 +72,9 @@ void     csFesvrStart(csHandle a) {
 void     csFesvrStop(csHandle a) { 
     cosim::csFesvrStop(a); 
 }
+void     csGDBStep(csHandle a) { 
+    cosim::csGDBStep(a); 
+}
 }
 
 csHandle cosim::csCreateCtx(int argc, char ** argv){
@@ -77,12 +85,9 @@ csHandle cosim::csCreateCtx(int argc, char ** argv){
   bool dump_config_string = false;
   size_t nprocs = 1;
   size_t mem_mb = 0;
-  std::unique_ptr<icache_sim_t> ic;
-  std::unique_ptr<dcache_sim_t> dc;
-  std::unique_ptr<cache_sim_t> l2;
   std::function<extension_t*()> extension;
   const char* isa = DEFAULT_ISA;
-  uint16_t gdb_port = 0;
+  gdb_port = 0;
 
   option_parser_t parser;
   parser.help(&help);
@@ -94,10 +99,10 @@ csHandle cosim::csCreateCtx(int argc, char ** argv){
   parser.option('m', 0, 1, [&](const char* s){mem_mb = atoi(s);});
   // I wanted to use --halted, but for some reason that doesn't work.
   parser.option('H', 0, 0, [&](const char* s){halted = true;});
-//  parser.option(0, "gdb-port", 1, [&](const char* s){gdb_port = atoi(s);});
-//  parser.option(0, "ic", 1, [&](const char* s){ic.reset(new icache_sim_t(s));});
-//  parser.option(0, "dc", 1, [&](const char* s){dc.reset(new dcache_sim_t(s));});
-//  parser.option(0, "l2", 1, [&](const char* s){l2.reset(cache_sim_t::construct(s, "L2$"));});
+  parser.option(0, "gdb-port", 1, [&](const char* s){gdb_port = atoi(s);});
+  parser.option(0, "ic", 1, [&](const char* s){ic.reset(new icache_sim_t(s));});
+  parser.option(0, "dc", 1, [&](const char* s){dc.reset(new dcache_sim_t(s));});
+  parser.option(0, "l2", 1, [&](const char* s){l2.reset(cache_sim_t::construct(s, "L2$"));});
   parser.option(0, "isa", 1, [&](const char* s){isa = s;});
   parser.option(0, "extension", 1, [&](const char* s){extension = find_extension(s);});
   parser.option(0, "dump-config-string", 0, [&](const char *s){dump_config_string = true;});
@@ -112,11 +117,10 @@ csHandle cosim::csCreateCtx(int argc, char ** argv){
   auto argv1 = parser.parse(argv);
   std::vector<std::string> htif_args(argv1, (const char*const*)argv + argc);
   sim_t* s = new sim_t(isa, nprocs, mem_mb, halted, htif_args);
-  std::unique_ptr<gdbserver_t> gdbserver;
-//  if (gdb_port) {
-//    gdbserver = std::unique_ptr<gdbserver_t>(new gdbserver_t(gdb_port, &s));
-//    s.set_gdbserver(&(*gdbserver));
-//  }
+  if (gdb_port) {
+    gdbserver = std::unique_ptr<gdbserver_t>(new gdbserver_t(gdb_port, s));
+    s->set_gdbserver(&(*gdbserver));
+  }
 
   if (dump_config_string) {
     printf("%s", s->get_config_string());
@@ -126,12 +130,12 @@ csHandle cosim::csCreateCtx(int argc, char ** argv){
   if (!*argv1)
     help();
 
-  //if (ic && l2) ic->set_miss_handler(&*l2);
-  //if (dc && l2) dc->set_miss_handler(&*l2);
+  if (ic && l2) ic->set_miss_handler(&*l2);
+  if (dc && l2) dc->set_miss_handler(&*l2);
   for (size_t i = 0; i < nprocs; i++)
   {
-  //  if (ic) s->get_core(i)->get_mmu()->register_memtracer(&*ic);
-  //  if (dc) s->get_core(i)->get_mmu()->register_memtracer(&*dc);
+    if (ic) s->get_core(i)->get_mmu()->register_memtracer(&*ic);
+    if (dc) s->get_core(i)->get_mmu()->register_memtracer(&*dc);
     if (extension) s->get_core(i)->register_extension(extension());
   }
 
@@ -258,5 +262,12 @@ void cosim::csFesvrStep(csHandle& handle){
 void cosim::csFesvrStop(csHandle& handle){
   sim_t* s = reinterpret_cast<sim_t*>(handle);
   s->stop();
+}
+
+void cosim::csGDBStep(csHandle& handle){
+  sim_t* s = reinterpret_cast<sim_t*>(handle);
+  if (s == NULL) return;
+  if (gdb_port == 0) return;
+  s->gdbserver->handle();
 }
 

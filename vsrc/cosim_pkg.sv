@@ -108,33 +108,30 @@ package cosim_pkg;
     uint8_t  yield_lr;
   } csAsynEvt_t;
 
-  import "DPI" function chandle csCreateCtx(
+  import "DPI" context function chandle csCreateCtx(
                     input  string       args);
-  import "DPI" function void     csDestroyCtx(
+  import "DPI" context function void     csDestroyCtx(
                     inout csHandle      handle);
-  import "DPI" function int      csStep(
+  import "DPI" context function int      csStep(
                     input csHandle      handle, 
                     input uint8_t       pid, 
                     input csAsynEvt_t   aevt);
-  import "DPI" function int      csGetCPUChg(
+  import "DPI" context function int      csGetCPUChg(
                     input csHandle      handle, 
                     input uint8_t       pid, 
                     output csChgInfo_t  csi);
-  import "DPI" function int      csExecCPUop(
+  import "DPI" context function int      csExecCPUop(
                     input csHandle      handle, 
                     input uint8_t       pid, 
                     inout csChgOP_t     csi);
-  import "DPI" function void     csFesvrStop(
+  import "DPI" context function void     csFesvrStop(
                     input csHandle      handle);
-  import "DPI" function void     csFesvrStart(
+  import "DPI" context function void     csFesvrStart(
                     input csHandle      handle);
-  import "DPI" function void     csFesvrStep(
+  import "DPI" context function void     csFesvrStep(
                     input csHandle      handle);
-  export "DPI" function                  cs_mem_write;
-
-  function void cs_mem_write(input reg_t addr, reg_t data);
-      $display("htif write %h = %h", addr, data);
-  endfunction
+  import "DPI" context function void     csGDBStep(
+                    input csHandle      handle);
 
   function automatic string csi2string(const ref csChgInfo_t csi, input bit verb = 0);
     csi2string = "";

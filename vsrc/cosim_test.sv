@@ -5,6 +5,11 @@ program cosim_test;
 
   import cosim_pkg::* ;
 
+  export "DPI" function                  cs_mem_write;
+
+  function void cs_mem_write(input reg_t addr, reg_t data);
+      $display("htif write %h = %h", addr, data);
+  endfunction
 
   initial begin
     csHandle h;
@@ -26,11 +31,20 @@ program cosim_test;
     op.data   = 'h0;
     csExecCPUop(h, 0, op);
     $display("read result is %h\n", op.data);
-    for (int i = 0; i < 10; i++) begin
-        csStep(h, 0, aevt);
-        csGetCPUChg(h, 0, csi);
-        $display(csi2string(csi, 1));
+    //for (int i = 0; i < 10; i++) begin
+    //    csStep(h, 0, aevt);
+    //    csGetCPUChg(h, 0, csi);
+    //    $display(csi2string(csi, 1));
+    //end
+    while(1) begin
+        for (int i = 0; i < 2000; i++) begin
+            csStep(h, 0, aevt);
+        end
+        //$display(".");
+        csFesvrStep(h);
+        csGDBStep(h);
     end
+    csGDBStep(h);
     csDestroyCtx(h);
   end
 endprogram
