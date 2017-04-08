@@ -5,16 +5,12 @@ program cosim_test;
 
   import cosim_pkg::* ;
 
-  export "DPI" function                  cs_mem_write;
 
-  function void cs_mem_write(input reg_t addr, reg_t data);
-      $display("htif write %h = %h", addr, data);
-  endfunction
-    
   initial begin
     csHandle h;
     csChgInfo_t csi;
     csChgOP_t   op;
+    csAsynEvt_t aevt = '{default : 0};
     string arg = "spike", exec;
     if ($value$plusargs("exec=%s", exec))
       arg = {arg, " ", exec};                       
@@ -30,8 +26,8 @@ program cosim_test;
     op.data   = 'h0;
     csExecCPUop(h, 0, op);
     $display("read result is %h\n", op.data);
-    for (int i = 0; i < 100; i++) begin
-        csStep(h);
+    for (int i = 0; i < 10; i++) begin
+        csStep(h, 0, aevt);
         csGetCPUChg(h, 0, csi);
         $display(csi2string(csi, 1));
     end

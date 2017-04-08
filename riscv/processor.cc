@@ -196,10 +196,17 @@ void processor_t::enter_debug_mode(uint8_t cause)
   set_privilege(PRV_M);
   state.dpc = state.pc;
   state.pc = DEBUG_ROM_START;
+  csi.ti.dcause = cause;
+  csi.ti.dbg = 1;
 }
 
 void processor_t::take_trap(trap_t& t, reg_t epc)
 {
+  csi.ti.cause = t.cause();
+  csi.ti.trp = 1;
+  if (t.has_badaddr())
+      csi.ti.badaddr = t.get_badaddr();
+
   if (debug) {
     fprintf(stderr, "core %3d: exception %s, epc 0x%016" PRIx64 "\n",
             id, t.name(), epc);
@@ -257,6 +264,7 @@ void processor_t::take_trap(trap_t& t, reg_t epc)
   }
 
   yield_load_reservation();
+  csi.ti.prv = state.prv;
 }
 
 void processor_t::disasm(insn_t insn)

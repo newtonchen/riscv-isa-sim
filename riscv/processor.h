@@ -291,6 +291,7 @@ public:
 
 private:
   csChgInfo_t csi;   // cosim info
+  csAsynEvt_t aevt;
   sim_t* sim;
   mmu_t* mmu; // main memory is always accessed via the mmu
   extension_t* ext;

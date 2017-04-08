@@ -49,8 +49,8 @@ csHandle csCreateCtx(char * s) {
 void     csDestroyCtx(csHandle* a) { 
     cosim::csDestroyCtx(*a); 
 }
-int      csStep(csHandle a, uint8_t b, uint32_t c, uint8_t d) { 
-    return cosim::csStep(a, b, c, d);
+int      csStep(csHandle a, uint8_t b, csAsynEvt_t c) { 
+    return cosim::csStep(a, b, c);
 }
 int      csGetCPUChg(csHandle a, uint8_t b, csChgInfo_t* c) {
     return cosim::csGetCPUChg(a, b, *c);
@@ -150,15 +150,16 @@ void cosim::csDestroyCtx(csHandle& handle){
   handle = NULL;
 }
 
-int cosim::csStep(csHandle handle, uint8_t pid, uint32_t n, uint8_t yield_lr){
+int cosim::csStep(csHandle handle, uint8_t pid, csAsynEvt_t aevt){
   sim_t* s = reinterpret_cast<sim_t*>(handle);
   if (s == NULL) return 0;
   if (pid >= s->procs.size()) return 0;
   processor_t& p = *s->procs[pid];
-  if (yield_lr)
+  if (aevt.yield_lr)
     p.yield_load_reservation();
   p.csi.clear();
-  p.step(n);
+  p.aevt = aevt;
+  p.step(1);
   return 1;
 }
 
