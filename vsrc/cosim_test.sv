@@ -5,10 +5,15 @@ program cosim_test;
 
   import cosim_pkg::* ;
 
-  export "DPI" function                  cs_mem_write;
+  export "DPI" function                  htif_mem_write;
+  export "DPI" function                  dbg_mem_write;
 
-  function void cs_mem_write(input reg_t addr, reg_t data);
+  function void htif_mem_write(input reg_t addr, reg_t data);
       $display("htif write %h = %h", addr, data);
+  endfunction
+
+  function void dbg_mem_write(input uint32_t addr, uint32_t data);
+      $display("dbg write %h = %h", addr, data);
   endfunction
 
   initial begin

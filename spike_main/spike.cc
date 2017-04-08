@@ -15,7 +15,8 @@
 
 extern "C"
 {
-void cs_mem_write(reg_t, reg_t) {};
+void htif_mem_write(reg_t, reg_t) {};
+void dbg_mem_write(uint32_t, uint32_t) {};
 }
 
 static void help()

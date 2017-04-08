@@ -13,7 +13,7 @@
 #include "svdpi.h"
 extern "C"
 {
-void cs_mem_write(reg_t, reg_t);    // Imported from SystemVerilog
+void htif_mem_write(reg_t, reg_t);    // Imported from SystemVerilog
 }
 
 volatile bool ctrlc_pressed = false;
@@ -233,5 +233,5 @@ void sim_t::write_chunk(addr_t taddr, size_t len, const void* src)
   uint64_t data;
   memcpy(&data, src, sizeof data);
   debug_mmu->store_uint64(taddr, data);
-  cs_mem_write(taddr, data);
+  htif_mem_write(taddr, data);
 }

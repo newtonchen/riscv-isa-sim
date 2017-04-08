@@ -5,6 +5,11 @@
 
 #include "debug_rom/debug_rom.h"
 
+extern "C"
+{
+void dbg_mem_write(uint32_t, uint32_t);    // Imported from SystemVerilog
+}
+
 bool debug_module_t::load(reg_t addr, size_t len, uint8_t* bytes)
 {
   addr = DEBUG_START + addr;
@@ -59,6 +64,7 @@ void debug_module_t::ram_write32(unsigned int index, uint32_t value)
   base[1] = (value >> 8) & 0xff;
   base[2] = (value >> 16) & 0xff;
   base[3] = (value >> 24) & 0xff;
+  dbg_mem_write(index, value);
 }
 
 uint32_t debug_module_t::ram_read32(unsigned int index)
