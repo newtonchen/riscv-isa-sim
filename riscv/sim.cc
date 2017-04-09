@@ -13,7 +13,7 @@
 #include "svdpi.h"
 extern "C"
 {
-void htif_mem_write(reg_t, reg_t);    // Imported from SystemVerilog
+int htif_mem_write(reg_t, reg_t);    // Imported from SystemVerilog
 }
 
 volatile bool ctrlc_pressed = false;

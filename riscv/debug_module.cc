@@ -7,7 +7,7 @@
 
 extern "C"
 {
-void dbg_mem_write(uint32_t, uint32_t);    // Imported from SystemVerilog
+int dbg_mem_write(uint32_t, uint32_t);    // Imported from SystemVerilog
 }
 
 bool debug_module_t::load(reg_t addr, size_t len, uint8_t* bytes)

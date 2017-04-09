@@ -41,8 +41,10 @@ csHandle csCreateCtx(char * s) {
     enum { kMaxArgs = 64 };
     int argc = 0;
     char *argv[kMaxArgs];
-    
-    char *p2 = strtok(s, " ");
+    char *p2;
+
+    fprintf(stderr, "SPIKE cosim creating context with args:\n%s\n", s);
+    p2 = strtok(s, " ");
     while (p2 && argc < kMaxArgs-1)
       {
         argv[argc++] = p2;
@@ -63,17 +65,20 @@ int      csGetCPUChg(csHandle a, uint8_t b, csChgInfo_t* c) {
 int      csExecCPUop(csHandle a, uint8_t b, csChgOP_t* c) {
     return cosim::csExecCPUop(a, b, *c);
 }
-void     csFesvrStep(csHandle a) { 
+int      csFesvrStep(csHandle a) {  // this is a task 
     cosim::csFesvrStep(a); 
+    return 0;
 }
-void     csFesvrStart(csHandle a) { 
+int      csFesvrStart(csHandle a) {  // this is a task
     cosim::csFesvrStart(a); 
+    return 0;
 }
 void     csFesvrStop(csHandle a) { 
     cosim::csFesvrStop(a); 
 }
-void     csGDBStep(csHandle a) { 
+int      csGDBStep(csHandle a) {  // this is a task
     cosim::csGDBStep(a); 
+    return 0;
 }
 }
 
@@ -88,7 +93,7 @@ csHandle cosim::csCreateCtx(int argc, char ** argv){
   std::function<extension_t*()> extension;
   const char* isa = DEFAULT_ISA;
   gdb_port = 0;
-
+  
   option_parser_t parser;
   parser.help(&help);
   parser.option('h', 0, 0, [&](const char* s){help();});
