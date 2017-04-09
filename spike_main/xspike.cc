@@ -15,12 +15,7 @@
 static pid_t fork_spike(int tty_fd, int argc, char** argv);
 static pid_t fork_xterm(int* tty_fd);
 
-#include <stdint.h>
-extern "C"
-{
-void htif_mem_write(uint64_t, uint64_t) {};
-void dbg_mem_write(uint32_t, uint32_t) {};
-}
+#include "cosim_cb.h"
 
 int main(int argc, char** argv)
 {
